@@ -1,0 +1,69 @@
+x-dbz-zookeeper: &dbz-zookeeper debezium/zookeeper:${TAG:-1.9}
+x-dbz-ui: &dbz-ui debezium/debezium-ui:${TAG:-1.9}
+x-dbz-connect: &dbz-connect debezium/connect:${TAG:-1.9}
+x-dbz-postgres: &dbz-postgres debezium/postgres:${PG_TAG:-11}
+
+version: "3.7"
+services:
+  zookeeper:
+    image: *dbz-zookeeper
+    container_name: dbz_zookeeper
+    restart: unless-stopped
+    ports:
+      - 2181:2181
+      - 2888:2888
+      - 3888:3888
+
+  kafka:
+    build: ./kafka
+    container_name: dbz_kafka
+    restart: unless-stopped
+    ports:
+      - 9092:9092
+    links:
+      - "zookeeper:zookeeper"
+    environment:
+      - ZOOKEEPER_CONNECT=zookeeper
+    depends_on:
+      - zookeeper
+
+  postgres:
+    image: *dbz-postgres
+    container_name: dbz_postgres
+    restart: unless-stopped
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_DB=dbz_examples
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+
+  connect:
+    image: *dbz-connect
+    container_name: dbz_connect
+    restart: unless-stopped
+    ports:
+      - 8083:8083
+    environment:
+      - BOOTSTRAP_SERVERS=kafka:9092
+      - CONFIG_STORAGE_TOPIC=dz_connect_config
+      - OFFSET_STORAGE_TOPIC=dz_connect_offset
+      - STATUS_STORAGE_TOPIC=dz_connect_status
+    links:
+      - "zookeeper:zookeeper"
+      - "kafka:kafka"
+      - "postgres:postgres"
+    depends_on:
+      - kafka
+      - postgres
+
+  ui:
+    image: *dbz-ui
+    container_name: dbz_ui
+    restart: unless-stopped
+    ports:
+      - 8081:8080
+    links:
+      - "connect:connect"
+    depends_on:
+      - connect

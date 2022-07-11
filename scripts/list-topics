@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -ex
+
+COMPOSE=${1:-"default"}
+
+docker run -it --rm --network debezium-sharing_$COMPOSE --link dbz_zookeeper:zookeeper --link dbz_kafka:kafka -e KAFKA_BROKER=kafka:9092 debezium/kafka:1.9 list-topics

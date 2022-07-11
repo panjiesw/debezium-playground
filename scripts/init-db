@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -ex
+
+db_file=$(pwd)/db/schema.sql
+
+psql -h localhost -p 5432 -U postgres -d dbz_examples < $db_file

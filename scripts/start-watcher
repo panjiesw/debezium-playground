@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set -ex
+
+COMPOSE=${1:-"default"}
+FROM_BEGINNING=${2:-""}
+
+docker run -it --rm --network debezium-sharing_$COMPOSE \
+  --link dbz_zookeeper:zookeeper \
+  --link dbz_kafka:kafka \
+  debezium-sharing_kafka \
+  sh -c "/kafka/bin/kafka-console-consumer.sh --bootstrap-server kafka:9092 --property print.key=true --property fetch.min.bytes=1 --topic dbz_postgres.public.customers $FROM_BEGINNING | /usr/bin/jq '.'"
