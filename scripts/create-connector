@@ -20,9 +20,9 @@ curl -i -X POST -H "Accept:application/json" -H "Content-Type:application/json" 
           "table.include.list": "public.customers",
           "database.history.kafka.bootstrap.servers": "kafka:9092",
           "key.converter": "org.apache.kafka.connect.json.JsonConverter",
-          "key.converter.schemas.enabled": "false",
+          "key.converter.schemas.enable": "false",
           "value.converter": "org.apache.kafka.connect.json.JsonConverter",
-          "value.converter.schemas.enabled": "false",
+          "value.converter.schemas.enable": "false",
           "plugin.name": "pgoutput"
   }
 }'

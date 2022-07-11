@@ -4,4 +4,9 @@ set -ex
 
 db_file=$(pwd)/db/schema.sql
 
-psql -h localhost -p 5432 -U postgres -d dbz_examples < $db_file
+docker run -it --rm \
+  --network debezium-sharing_default \
+  --link dbz_postgres:postgres \
+  -v "$db_file:/schema.sql" \
+  debezium/postgres:11 \
+  sh -c "psql postgresql://postgres:password@postgres:5432/dbz_examples < /schema.sql"
