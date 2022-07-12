@@ -1,0 +1,9 @@
+#!/bin/bash
+
+set -ex
+
+docker run -it --rm \
+  --network debezium-sharing_default \
+  --link dbz_postgres:postgres \
+  debezium/postgres:11 \
+  sh -c "psql postgresql://postgres:password@postgres:5432/dbz_examples"
