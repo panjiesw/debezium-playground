@@ -2,7 +2,7 @@
 
 set -ex
 
-db_file=$(pwd)/db/schema.sql
+db_file=$(pwd)/db/schema.psql
 
 docker run -it --rm \
   --network debezium-sharing_default \
