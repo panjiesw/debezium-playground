@@ -57,6 +57,17 @@ services:
       - kafka
       - postgres
 
+  transformer:
+    build: ./transformer
+    container_name: dbz_transformer
+    restart: unless-stopped
+    links:
+      - "kafka:kafka"
+    depends_on:
+      - kafka
+      - postgres
+      - connect
+
   ui:
     image: *dbz-ui
     container_name: dbz_ui

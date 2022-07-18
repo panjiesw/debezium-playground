@@ -1,0 +1,6 @@
+BEGIN;
+
+INSERT INTO orders VALUES (default, '2022-07-19', 1002, 3, 109);
+UPDATE products_on_hand SET quantity = quantity - 3 WHERE product_id = 109;
+
+ROLLBACK;

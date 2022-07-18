@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set -ex
+
+db_file=$(pwd)/db/transaction-$1.psql
+
+docker run -it --rm \
+  --network debezium-sharing_default \
+  --link dbz_postgres:postgres \
+  -v "$db_file:/data.sql" \
+  debezium/postgres:11 \
+  sh -c "psql postgresql://postgres:password@postgres:5432/dbz_examples < /data.sql"

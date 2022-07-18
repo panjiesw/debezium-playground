@@ -37,6 +37,17 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
 
+  db-olap:
+    build: ./db-olap
+    container_name: dbz_db_olap
+    restart: unless-stopped
+    ports:
+      - 5433:5432
+    environment:
+      - POSTGRES_DB=olap
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+
   connect:
     image: *dbz-connect
     container_name: dbz_connect
@@ -55,6 +66,18 @@ services:
     depends_on:
       - kafka
       - postgres
+
+  transformer:
+    build: ./transformer
+    container_name: dbz_transformer
+    restart: unless-stopped
+    links:
+      - "kafka:kafka"
+      - "db-olap:db-olap"
+    depends_on:
+      - kafka
+      - postgres
+      - connect
 
   ui:
     image: *dbz-ui

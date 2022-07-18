@@ -1,0 +1,47 @@
+CREATE TABLE dates_dim (
+  id integer PRIMARY KEY,
+  date timestamp,
+  year integer,
+  month integer,
+  day_of_month integer,
+  week_of_year integer,
+  day_of_week integer
+);
+
+CREATE TABLE products_dim (
+  id integer PRIMARY KEY,
+  name varchar(255)
+);
+
+CREATE TABLE customers_dim (
+  id integer PRIMARY KEY,
+  first_name varchar(255),
+  last_name varchar(255)
+);
+
+CREATE TABLE orders_dim (
+  date_id integer NOT NULL,
+  customer_id integer NOT NULL,
+  product_id integer NOT NULL,
+  quantity integer,
+  UNIQUE (date_id, customer_id, product_id)
+);
+
+INSERT INTO dates_dim (id, date, year, month, day_of_month, week_of_year, day_of_week)
+SELECT
+  TO_CHAR(date_seq, 'yyyymmdd')::int AS id,
+  date_seq AS date,
+  EXTRACT(ISOYEAR FROM date_seq) AS year,
+  EXTRACT(MONTH FROM date_seq) AS month,
+  EXTRACT(DAY FROM date_seq) AS day_of_month,
+  EXTRACT(WEEK FROM date_seq) AS week_of_year,
+  EXTRACT(ISODOW FROM date_seq) AS day_of_week
+FROM (
+  SELECT
+    '2022-07-01'::date + SEQUENCE.DAY AS date_seq
+  FROM
+    GENERATE_SERIES(0, 5000) AS SEQUENCE (DAY)
+  ORDER BY
+    date_seq) DS
+ON CONFLICT (id)
+  DO NOTHING;
