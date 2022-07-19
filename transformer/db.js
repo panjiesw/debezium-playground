@@ -41,10 +41,10 @@ const processOrderDim = async ({ date_id, customer_id, product_id, quantity }) =
   const client = await pool.connect();
   try {
     const res = await client.query(
-      `INSERT INTO orders_dim(date_id, customer_id, product_id, quantity)
+      `INSERT INTO orders_fact(date_id, customer_id, product_id, quantity)
       VALUES($1, $2, $3, $4)
       ON CONFLICT(date_id, customer_id, product_id) DO UPDATE SET
-        quantity = orders_dim.quantity + EXCLUDED.quantity`,
+        quantity = orders_fact.quantity + EXCLUDED.quantity`,
       [date_id, customer_id, product_id, quantity],
     );
     console.log('insert order result', res);

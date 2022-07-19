@@ -63,6 +63,7 @@ services:
     restart: unless-stopped
     links:
       - "kafka:kafka"
+      - "db-olap:db-olap"
     depends_on:
       - kafka
       - postgres

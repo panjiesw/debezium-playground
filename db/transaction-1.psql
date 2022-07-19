@@ -1,6 +1,6 @@
 BEGIN;
 
-INSERT INTO orders VALUES (default, '2022-07-19', 1004, 2, 103);
+INSERT INTO orders VALUES (default, '2022-01-4', 1004, 2, 103);
 UPDATE products_on_hand SET quantity = quantity - 2 WHERE product_id = 103;
 
 END;

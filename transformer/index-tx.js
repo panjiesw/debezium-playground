@@ -1,7 +1,5 @@
 const TTLCache = require('@isaacs/ttlcache');
-const { addDays, format } = require('date-fns');
 const { Kafka } = require('kafkajs');
-const { olap } = require('./db');
 
 const client = new Kafka({
   clientId: 'example-app',
@@ -11,28 +9,6 @@ const client = new Kafka({
 const consumer = client.consumer({ groupId: 'my-group' });
 
 const tx = new TTLCache({ ttl: 60000, max: 1000 });
-
-async function process(table, value) {
-  if (table === 'customers') {
-    await olap.customers({
-      id: value.id,
-      first_name: value.first_name,
-      last_name: value.last_name,
-    });
-  } else if (table === 'products') {
-    await olap.products({
-      id: value.id,
-      name: value.name,
-    });
-  } else if (table === 'orders') {
-    await olap.orders({
-      date_id: parseInt(format(addDays(0, value.order_date), 'yyyyMMdd'), 10),
-      customer_id: value.purchaser,
-      product_id: value.product_id,
-      quantity: value.quantity,
-    });
-  }
-}
 
 async function run() {
   await consumer.connect();
@@ -67,7 +43,6 @@ async function run() {
         }
       } else {
         const tableFQN = topic.split('dbz_postgres.')[1];
-        const table = tableFQN.split('.')[1];
 
         if (value.transaction != null && tx.has(value.transaction.id)) {
           console.log(`[TRANSACTION_PART] Received event "${tableFQN}":`);
@@ -79,7 +54,6 @@ async function run() {
         } else {
           console.log(`Received event "${tableFQN}":`);
           console.dir({ key, value }, { depth: null });
-          await process(table, value.after);
           return;
         }
       }
@@ -107,14 +81,6 @@ async function run() {
             // process it.
             console.log(`Transaction ${txc[0]} completed:`);
             console.dir(txc[1], { depth: null });
-            for (const table of tables) {
-              let i = txc[1].data[table].length;
-              while (i--) {
-                const data = txc[1].data[table].splice(i, 1);
-                await process(table, data);
-                tx.set(txc[0], txc[1]);
-              }
-            }
             tx.delete(txc[0]);
           }
         }

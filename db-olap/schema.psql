@@ -19,7 +19,7 @@ CREATE TABLE customers_dim (
   last_name varchar(255)
 );
 
-CREATE TABLE orders_dim (
+CREATE TABLE orders_fact (
   date_id integer NOT NULL,
   customer_id integer NOT NULL,
   product_id integer NOT NULL,
@@ -38,7 +38,7 @@ SELECT
   EXTRACT(ISODOW FROM date_seq) AS day_of_week
 FROM (
   SELECT
-    '2022-07-01'::date + SEQUENCE.DAY AS date_seq
+    '2022-01-01'::date + SEQUENCE.DAY AS date_seq
   FROM
     GENERATE_SERIES(0, 5000) AS SEQUENCE (DAY)
   ORDER BY
