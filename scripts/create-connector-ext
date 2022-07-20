@@ -1,0 +1,29 @@
+#!/bin/bash
+
+set -ex
+
+curl -i -X POST -H "Accept:application/json" -H "Content-Type:application/json" http://localhost:8083/connectors/ -d '
+{
+  "name": "dbz-pg-connector",
+  "config": {
+          "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+          "tasks.max": "1",
+          "group.id": "test",
+          "database.hostname": "172.24.0.1",
+          "database.port": "5432",
+          "database.user": "dbz",
+          "database.password": "dbz",
+          "database.dbname": "dbz_db",
+          "database.server.name": "dbz_postgres",
+          "schema.include.list": "public",
+          "heartbeat.interval.ms": "1000",
+          "table.include.list": "public.customers,public.products,public.orders,public.products_on_hand",
+          "provide.transaction.metadata": "true",
+          "database.history.kafka.bootstrap.servers": "kafka:9092",
+          "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+          "key.converter.schemas.enable": "false",
+          "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+          "value.converter.schemas.enable": "false",
+          "plugin.name": "pgoutput"
+  }
+}'

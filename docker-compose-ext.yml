@@ -1,0 +1,123 @@
+x-dbz-zookeeper: &dbz-zookeeper debezium/zookeeper:${TAG:-1.9}
+x-dbz-ui: &dbz-ui debezium/debezium-ui:${TAG:-1.9}
+x-dbz-connect: &dbz-connect debezium/connect:${TAG:-1.9}
+
+version: "3.7"
+
+# We'll use custom network for predictable IPs. Below, anything inside containers can access
+# hosts' network by calling the gateway IP (172.24.0.1).
+# If there is error "Address already in use" when doing docker-compose up,
+# change the IP address, e.g. 172.24 -> 172.25, or anything that's free.
+networks:
+  dbz-network:
+    name: dbz_network
+    attachable: true
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.24.0.0/16
+          ip_range: 172.24.5.0/24
+          gateway: 172.24.0.1
+
+services:
+  zookeeper:
+    image: *dbz-zookeeper
+    container_name: dbz_zookeeper
+    restart: unless-stopped
+    ports:
+      - 2181:2181
+      - 2888:2888
+      - 3888:3888
+    networks:
+      - dbz-network
+
+  kafka:
+    build: ./kafka
+    container_name: dbz_kafka
+    restart: unless-stopped
+    ports:
+      - 9092:9092
+    links:
+      - "zookeeper:zookeeper"
+    environment:
+      - ZOOKEEPER_CONNECT=zookeeper
+    depends_on:
+      - zookeeper
+    networks:
+      - dbz-network
+
+  # We disable this since we're using PostgreSQL outside of compose
+  #
+  # postgres:
+  #   build: ./db
+  #   container_name: dbz_postgres
+  #   restart: unless-stopped
+  #   ports:
+  #     - 5432:5432
+  #   environment:
+  #     - POSTGRES_DB=dbz_examples
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_PASSWORD=password
+
+  db-olap:
+    build: ./db-olap
+    container_name: dbz_db_olap
+    restart: unless-stopped
+    ports:
+      - 5433:5432
+    environment:
+      - POSTGRES_DB=olap
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    networks:
+      - dbz-network
+
+  connect:
+    image: *dbz-connect
+    container_name: dbz_connect
+    restart: unless-stopped
+    ports:
+      - 8083:8083
+    environment:
+      - BOOTSTRAP_SERVERS=kafka:9092
+      - CONFIG_STORAGE_TOPIC=dz_connect_config
+      - OFFSET_STORAGE_TOPIC=dz_connect_offset
+      - STATUS_STORAGE_TOPIC=dz_connect_status
+    links:
+      - "zookeeper:zookeeper"
+      - "kafka:kafka"
+      # - "postgres:postgres"
+    depends_on:
+      - kafka
+      - postgres
+    networks:
+      - dbz-network
+
+  transformer:
+    build: ./transformer
+    container_name: dbz_transformer
+    restart: unless-stopped
+    links:
+      - "kafka:kafka"
+      - "db-olap:db-olap"
+    depends_on:
+      - kafka
+      # - postgres
+      - connect
+    networks:
+      - dbz-network
+
+  ui:
+    image: *dbz-ui
+    container_name: dbz_ui
+    restart: unless-stopped
+    ports:
+      - 8081:8080
+    environment:
+      - KAFKA_CONNECT_URIS=http://connect:8083
+    links:
+      - "connect:connect"
+    depends_on:
+      - connect
+    networks:
+      - dbz-network
