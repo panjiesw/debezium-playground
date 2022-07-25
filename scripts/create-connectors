@@ -1,0 +1,93 @@
+#!/bin/bash
+
+set -e
+
+create_source_1() {
+  curl -i -X POST -H "Accept:application/json" -H "Content-Type:application/json" http://localhost:8083/connectors/ -d '
+  {
+    "name": "dbz-pg-connector-source",
+    "config": {
+            "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+            "tasks.max": "1",
+            "slot.name": "dbz_source_1",
+            "group.id": "test",
+            "database.hostname": "172.24.0.1",
+            "database.port": "5432",
+            "database.user": "dbz",
+            "database.password": "dbz",
+            "database.dbname": "dbz_db",
+            "database.server.name": "dbz_postgres",
+            "schema.include.list": "public",
+            "heartbeat.interval.ms": "1000",
+            "table.include.list": "public.orders,public.products_on_hand",
+            "provide.transaction.metadata": "true",
+            "database.history.kafka.bootstrap.servers": "172.24.0.1:9092",
+            "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+            "key.converter.schemas.enable": "false",
+            "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+            "value.converter.schemas.enable": "false",
+            "plugin.name": "pgoutput"
+    }
+  }'
+}
+
+create_sink() {
+  curl -i -X POST -H "Accept:application/json" -H "Content-Type:application/json" http://localhost:8083/connectors/ -d '
+  {
+    "name": "dbz-pg-sink-connector",
+    "config": {
+            "connector.class": "io.confluent.connect.jdbc.JdbcSinkConnector",
+            "tasks.max": "1",
+            "connection.url": "jdbc:postgresql://db-olap-sink/olap",
+            "connection.user": "postgres",
+            "connection.password": "password",
+            "topics": "customers_dim,products_dim",
+            "transforms": "unwrap",
+            "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
+            "auto.create": "true",
+            "insert.mode": "upsert",
+            "pk.fields": "id",
+            "pk.mode": "record_value"
+    }
+  }'
+}
+
+create_source_2() {
+  curl -i -X POST -H "Accept:application/json" -H "Content-Type:application/json" http://localhost:8083/connectors/ -d '
+  {
+    "name": "dbz-pg-connector-source-passthrough",
+    "config": {
+            "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+            "tasks.max": "1",
+            "slot.name": "dbz_source_2",
+            "group.id": "test",
+            "database.hostname": "172.24.0.1",
+            "database.port": "5432",
+            "database.user": "dbz",
+            "database.password": "dbz",
+            "database.dbname": "dbz_db",
+            "database.server.name": "dbz_postgres",
+            "schema.include.list": "public",
+            "heartbeat.interval.ms": "1000",
+            "table.include.list": "public.customers,public.products",
+            "database.history.kafka.bootstrap.servers": "172.24.0.1:9092",
+            "plugin.name": "pgoutput",
+            "transforms": "route",
+            "transforms.route.type": "org.apache.kafka.connect.transforms.RegexRouter",
+            "transforms.route.regex": "([^.]+)\\.([^.]+)\\.([^.]+)",
+            "transforms.route.replacement": "$3_dim"
+    }
+  }'
+}
+
+case $1 in
+  "source1" ) shift
+      create_source_1
+      ;;
+  "source2" ) shift
+      create_source_2
+      ;;
+  "sink" ) shift
+      create_sink
+      ;;
+esac

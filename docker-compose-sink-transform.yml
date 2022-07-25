@@ -41,23 +41,11 @@ services:
       - "zookeeper:zookeeper"
     environment:
       - ZOOKEEPER_CONNECT=zookeeper
+      - KAFKA_ADVERTISED_HOST_NAME=172.24.0.1
     depends_on:
       - zookeeper
     networks:
       - dbz-network
-
-  # We disable this since we're using PostgreSQL outside of compose
-  #
-  # postgres:
-  #   build: ./db
-  #   container_name: dbz_postgres
-  #   restart: unless-stopped
-  #   ports:
-  #     - 5432:5432
-  #   environment:
-  #     - POSTGRES_DB=dbz_examples
-  #     - POSTGRES_USER=postgres
-  #     - POSTGRES_PASSWORD=password
 
   db-olap-sink:
     build: ./db-olap-sink
@@ -97,6 +85,7 @@ services:
   transformer:
     build: ./transformer
     container_name: dbz_transformer
+    command: node index-sink-transform.js
     restart: unless-stopped
     links:
       - "kafka:kafka"
