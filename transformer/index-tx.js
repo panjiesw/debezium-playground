@@ -44,7 +44,10 @@ async function run() {
       } else {
         const tableFQN = topic.split('dbz_postgres.')[1];
 
-        if (value.transaction != null && tx.has(value.transaction.id)) {
+        if (value.transaction != null) {
+          if (!tx.has(value.transaction.id)) {
+            tx.set(value.transaction.id, { data: {}, data_collections: {} });
+          }
           console.log(`[TRANSACTION_PART] Received event "${tableFQN}":`);
           console.dir({ key, value }, { depth: null });
 
@@ -65,10 +68,10 @@ async function run() {
           if (tables.length > 0) {
             // We've received END / COMMIT transaction event, check data completeness.
 
-            for (const table of tables) {
+            for (const tableFQN of tables) {
               if (
-                txc[1].data_collections[table] !==
-                (txc[1].data[table] || []).length
+                txc[1].data_collections[tableFQN] !==
+                (txc[1].data[tableFQN] || []).length
               ) {
                 // we haven't received all the event data that's part of the transaction
                 // don't process it further.

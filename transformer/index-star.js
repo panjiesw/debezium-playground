@@ -70,8 +70,10 @@ async function run() {
       } else {
         const tableFQN = topic.split('dbz_postgres.')[1];
         const table = tableFQN.split('.')[1];
-
-        if (value.transaction != null && tx.has(value.transaction.id)) {
+        if (value.transaction != null) {
+          if (!tx.has(value.transaction.id)) {
+            tx.set(value.transaction.id, { data: {}, data_collections: {} });
+          }
           console.log(`[TRANSACTION_PART] Received event "${tableFQN}":`);
           console.dir({ key, value }, { depth: null });
 
@@ -109,10 +111,11 @@ async function run() {
             // process it.
             console.log(`Transaction ${txc[0]} completed:`);
             console.dir(txc[1], { depth: null });
-            for (const table of tables) {
-              let i = txc[1].data[table].length;
+            for (const tableFQN of tables) {
+              let i = txc[1].data[tableFQN].length;
+              const table = tableFQN.split('.')[1];
               while (i--) {
-                const data = txc[1].data[table].splice(i, 1);
+                const data = txc[1].data[tableFQN].splice(i, 1)[0];
                 await process(table, data);
                 tx.set(txc[0], txc[1]);
               }

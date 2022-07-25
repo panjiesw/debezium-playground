@@ -10,6 +10,7 @@ RUN --mount=type=cache,target=/root/.yarn-build YARN_CACHE_FOLDER=/root/.yarn-bu
   yarn install --frozen-lockfile --production
 
 COPY index.js ./
+COPY index-sink-transform.js ./
 COPY db.js ./
 
 EXPOSE 3000
