@@ -1,6 +1,4 @@
 x-dbz-zookeeper: &dbz-zookeeper debezium/zookeeper:${TAG:-1.9}
-x-dbz-ui: &dbz-ui debezium/debezium-ui:${TAG:-1.9}
-x-dbz-connect: &dbz-connect debezium/connect:${TAG:-1.9}
 
 version: "3.7"
 
@@ -41,83 +39,29 @@ services:
       - "zookeeper:zookeeper"
     environment:
       - ZOOKEEPER_CONNECT=zookeeper
+      - KAFKA_ADVERTISED_HOST_NAME=172.24.0.1
     depends_on:
       - zookeeper
     networks:
       - dbz-network
 
-  # We disable this since we're using PostgreSQL outside of compose
-  #
-  # postgres:
-  #   build: ./db
-  #   container_name: dbz_postgres
-  #   restart: unless-stopped
-  #   ports:
-  #     - 5432:5432
-  #   environment:
-  #     - POSTGRES_DB=dbz_examples
-  #     - POSTGRES_USER=postgres
-  #     - POSTGRES_PASSWORD=password
-
-  db-olap:
-    build: ./db-olap
-    container_name: dbz_db_olap
-    restart: unless-stopped
-    ports:
-      - 5433:5432
-    environment:
-      - POSTGRES_DB=olap
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
-    networks:
-      - dbz-network
-
   connect:
-    image: *dbz-connect
+    build: ./connect
     container_name: dbz_connect
     restart: unless-stopped
     ports:
       - 8083:8083
     environment:
-      - BOOTSTRAP_SERVERS=kafka:9092
+      - BOOTSTRAP_SERVERS=172.24.0.1:9092
       - CONFIG_STORAGE_TOPIC=dz_connect_config
       - OFFSET_STORAGE_TOPIC=dz_connect_offset
       - STATUS_STORAGE_TOPIC=dz_connect_status
     links:
       - "zookeeper:zookeeper"
-      - "kafka:kafka"
+      # - "kafka:kafka"
       # - "postgres:postgres"
     depends_on:
       - kafka
-      - postgres
-    networks:
-      - dbz-network
-
-  transformer:
-    build: ./transformer
-    container_name: dbz_transformer
-    restart: unless-stopped
-    links:
-      - "kafka:kafka"
-      - "db-olap:db-olap"
-    depends_on:
-      - kafka
       # - postgres
-      - connect
     networks:
       - dbz-network
-
-  # ui:
-  #   image: *dbz-ui
-  #   container_name: dbz_ui
-  #   restart: unless-stopped
-  #   ports:
-  #     - 8081:8080
-  #   environment:
-  #     - KAFKA_CONNECT_URIS=http://connect:8083
-  #   links:
-  #     - "connect:connect"
-  #   depends_on:
-  #     - connect
-  #   networks:
-  #     - dbz-network

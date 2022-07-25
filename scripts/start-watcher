@@ -2,8 +2,7 @@
 
 set -ex
 
-docker run -it --rm --network debezium-sharing_default \
+docker run -it --rm --network dbz_network \
   --link dbz_zookeeper:zookeeper \
-  --link dbz_kafka:kafka \
-  debezium-sharing_kafka \
-  sh -c "/kafka/bin/kafka-console-consumer.sh --bootstrap-server kafka:9092 --property print.key=true --property fetch.min.bytes=1 --topic dbz_postgres.public.customers $@ | /usr/bin/jq '.'"
+  debezium-playground_kafka \
+  sh -c "/kafka/bin/kafka-console-consumer.sh --bootstrap-server 172.24.0.1:9092 --property print.key=true --property fetch.min.bytes=1 --topic customers $@ | /usr/bin/jq '.'"

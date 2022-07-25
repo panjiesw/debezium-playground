@@ -1,11 +1,18 @@
 const { Pool } = require('pg');
 
-const pool = new Pool({
+/**
+ * @type Pool
+ */
+let pool;
+
+const initPool = (config = {
   user: 'postgres',
   password: 'password',
   host: 'db-olap',
   database: 'olap',
-});
+}) => {
+  pool = new Pool(config);
+}
 
 const processCustomerDim = async ({ id, first_name, last_name }) => {
   const client = await pool.connect();
@@ -64,6 +71,7 @@ const queryDate = async () => {
 };
 
 module.exports = {
+  initPool,
   queryDate,
   olap: {
     customers: processCustomerDim,

@@ -1,14 +1,10 @@
 {
-  "name": "transformer",
+  "name": "sink-app",
   "version": "1.0.0",
-  "description": "app",
   "main": "index.js",
   "author": "Panjie Setiawan Wicaksono",
   "license": "Apache-2.0",
-  "private": true,
-  "scripts": {
-    "start": "node index.js"
-  },
+  "scripts": {},
   "dependencies": {
     "@isaacs/ttlcache": "^1.1.0",
     "date-fns": "^2.28.0",

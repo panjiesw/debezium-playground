@@ -1,9 +1,14 @@
 const TTLCache = require('@isaacs/ttlcache');
 const { addDays, format } = require('date-fns');
 const { Kafka } = require('kafkajs');
-const { olap, initPool } = require('./db');
+const { initPool, olap } = require('./db');
 
-initPool();
+initPool({
+  user: 'postgres',
+  password: 'password',
+  host: 'db-olap-sink',
+  database: 'olap',
+});
 
 const client = new Kafka({
   clientId: 'example-app',
@@ -15,18 +20,7 @@ const consumer = client.consumer({ groupId: 'my-group' });
 const tx = new TTLCache({ ttl: 60000, max: 1000 });
 
 async function process(table, value) {
-  if (table === 'customers') {
-    await olap.customers({
-      id: value.id,
-      first_name: value.first_name,
-      last_name: value.last_name,
-    });
-  } else if (table === 'products') {
-    await olap.products({
-      id: value.id,
-      name: value.name,
-    });
-  } else if (table === 'orders') {
+  if (table === 'orders') {
     await olap.orders({
       date_id: parseInt(format(addDays(0, value.order_date), 'yyyyMMdd'), 10),
       customer_id: value.purchaser,
@@ -41,8 +35,6 @@ async function run() {
   await consumer.subscribe({
     topics: [
       'dbz_postgres.transaction',
-      'dbz_postgres.public.customers',
-      'dbz_postgres.public.products',
       'dbz_postgres.public.orders',
       'dbz_postgres.public.products_on_hand',
     ],

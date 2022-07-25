@@ -1,7 +1,9 @@
 const TTLCache = require('@isaacs/ttlcache');
 const { addDays, format } = require('date-fns');
 const { Kafka } = require('kafkajs');
-const { olap } = require('./db');
+const { olap, initPool } = require('./db');
+
+initPool();
 
 const client = new Kafka({
   clientId: 'example-app',

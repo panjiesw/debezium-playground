@@ -2,4 +2,4 @@
 
 set -ex
 
-docker run -it --rm --network debezium-sharing_default --link dbz_zookeeper:zookeeper --link dbz_kafka:kafka -e KAFKA_BROKER=kafka:9092 debezium/kafka:1.9 list-topics
+docker run -it --rm --network dbz_network --link dbz_zookeeper:zookeeper --link dbz_kafka:kafka -e KAFKA_BROKER=kafka:9092 debezium/kafka:1.9 list-topics

@@ -5,7 +5,7 @@ set -ex
 db_file=$(pwd)/db/schema.psql
 
 docker run -it --rm \
-  --network debezium-sharing_default \
+  --network dbz_network \
   --link dbz_postgres:postgres \
   -v "$db_file:/schema.sql" \
   debezium/postgres:11 \

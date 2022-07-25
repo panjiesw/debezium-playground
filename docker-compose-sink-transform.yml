@@ -59,9 +59,9 @@ services:
   #     - POSTGRES_USER=postgres
   #     - POSTGRES_PASSWORD=password
 
-  db-olap:
-    build: ./db-olap
-    container_name: dbz_db_olap
+  db-olap-sink:
+    build: ./db-olap-sink
+    container_name: dbz_db_olap_sink
     restart: unless-stopped
     ports:
       - 5433:5432
@@ -73,23 +73,24 @@ services:
       - dbz-network
 
   connect:
-    image: *dbz-connect
+    build: ./connect
     container_name: dbz_connect
     restart: unless-stopped
     ports:
       - 8083:8083
     environment:
-      - BOOTSTRAP_SERVERS=kafka:9092
+      - BOOTSTRAP_SERVERS=172.24.0.1:9092
       - CONFIG_STORAGE_TOPIC=dz_connect_config
       - OFFSET_STORAGE_TOPIC=dz_connect_offset
       - STATUS_STORAGE_TOPIC=dz_connect_status
     links:
       - "zookeeper:zookeeper"
-      - "kafka:kafka"
+      - "db-olap-sink:db-olap-sink"
+      # - "kafka:kafka"
       # - "postgres:postgres"
     depends_on:
       - kafka
-      - postgres
+      # - postgres
     networks:
       - dbz-network
 
@@ -99,25 +100,10 @@ services:
     restart: unless-stopped
     links:
       - "kafka:kafka"
-      - "db-olap:db-olap"
+      - "db-olap-sink:db-olap-sink"
     depends_on:
       - kafka
       # - postgres
       - connect
     networks:
       - dbz-network
-
-  # ui:
-  #   image: *dbz-ui
-  #   container_name: dbz_ui
-  #   restart: unless-stopped
-  #   ports:
-  #     - 8081:8080
-  #   environment:
-  #     - KAFKA_CONNECT_URIS=http://connect:8083
-  #   links:
-  #     - "connect:connect"
-  #   depends_on:
-  #     - connect
-  #   networks:
-  #     - dbz-network
